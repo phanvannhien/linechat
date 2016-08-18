@@ -10,21 +10,29 @@
             margin: 0;
             padding:0;
         }
+        body{
+            background:#f5f5f5;
+        }
         .center-block{
             display: block;
-            position: absolute;
-            width:152px;
-            height: 45px;
-            top:100px;
-            left: calc(50% - 75px);
+            width:300px;
+            height: 200px;
+            padding: 20px;
+            border: 1px solid #d1d1d1;
+           
+            margin: 0 auto;
+             margin-top:100px;
+          
         }
     </style>
 </head>
 <body >
-    <div style="position: relative">
+    <div class="center-block">
+        
         <a  href="https://access.line.me/dialog/oauth/weblogin?response_type=code&client_id=1477592731&redirect_uri=https://tenposs-phanvannhien.c9users.io/verifined&state=123abc">
             LOGIN LINE
         </a>
+        <p>User: neihn88@gmail.com <br>Pass: Vannhien77</p>
     </div>
 </body>
 </html>

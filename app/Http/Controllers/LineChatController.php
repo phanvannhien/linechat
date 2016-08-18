@@ -24,6 +24,9 @@ class LineChatController extends Controller implements MessageComponentInterface
 
     private $bot;
     private $user;
+    protected $clients;
+   
+    
     public function __construct(){
         $this->clients = new \SplObjectStorage;
     	$config = [
@@ -32,9 +35,16 @@ class LineChatController extends Controller implements MessageComponentInterface
 	        'channelMid' => 'uaa357d613605ebf36f6366a7ce896180',
 	    ];
     	$this->bot = new LINEBot($config, new GuzzleHTTPClient($config));
+    	
+    
     }
 
     public function index(Request $request){
+        
+        $from = json_decode(json_encode($request->all()));
+        
+        $from = $from[0]->content['from'];
+        
         
     }
     
@@ -63,8 +73,7 @@ class LineChatController extends Controller implements MessageComponentInterface
                 $pictureUrl = '';
                 $statusMessage = '';
                 $profile = $this->bot->getUserProfile($data->mid);
-               
-                $res = $this->bot->sendText($data->mid, 'Welcome to Tenposs');
+                //$res = $this->bot->sendText($data->mid, 'Welcome to Tenposs');
                 return redirect('chat/'.$data->mid);
                 
             }
@@ -79,21 +88,18 @@ class LineChatController extends Controller implements MessageComponentInterface
 
     public function chat($mid){
       
-        return view('chat');
+        return view('chat',['mid' => $mid]);
     }
     
-    public function chatdemo(){
-        return view('chat');
-    }
+
     
-    protected $clients;
-    
-   
+
 
   public function onOpen(ConnectionInterface $conn) {
     // Store the new connection to send messages to later
     $this->clients->attach($conn);
     echo "New connection! ({$conn->resourceId})\n";
+    
     $res = $this->bot->sendText('u9c1af340d8af0d5aa7e63fffa2c2aa28', 'Welcome to Tenposs');
   
     $numRecv = count($this->clients) - 1;
@@ -112,7 +118,17 @@ class LineChatController extends Controller implements MessageComponentInterface
   }
 
   public function onMessage(ConnectionInterface $from, $msg) {
+      
     // The clients are, in this example, are not sending any messages.
+      $numRecv = count($this->clients) - 1;
+        echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
+            , $from->resourceId, json_decode($msg), $numRecv, $numRecv == 1 ? '' : 's');
+        foreach ($this->clients as $client) {
+            if ($from !== $client) {
+                // The sender is not the receiver, send to each client connected
+                $client->send($msg);
+            }
+        }
   }
 
   public function onClose(ConnectionInterface $conn) {

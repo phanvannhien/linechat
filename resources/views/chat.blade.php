@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>Websocket test site</title>
+    <script type="text/javascript" src="https://tenposs-phanvannhien.c9users.io/assets/js/jquery-1.11.2.min.js"></script>
     <script type="text/javascript">
       // Edit these variables to match your environent.
       var ws_host = 'tenposs-phanvannhien.c9users.io';
@@ -22,18 +23,39 @@
       conn.onopen = function(e) {
         // Spit this out in the console so we can tell if the
         // connection was successfull.
-        console.log("Connection established!");
+        var u = $('<p/>').text('Welcome! --||{{ $mid }}||-- Can i help you.?');
+        $('#chat-container').append(u);
       };
       conn.onmessage = function(e) {
         // When ever a message is recieved, from the server, append
         // the message to the existing text in the chat area.
-        console.log(e.data);
-        
+        $('#chat-container').append(e.data);
       };
+      conn.onclose =function(e){
+          console.log('Connection closed');
+      };
+      
+      $(document).ready(function(){
+         $('#send-message').on('click',function(e){
+            e.preventDefault();
+             console.log('Send'+$('#text-message').val());
+            $('#chat-container').append($('#text-message').val());
+            conn.send( {"mid": "<?php echo $mid ?>" , "data": $('#text-message').val() } );
+          });
+      });
+     
+      
+      
     </script>
   </head>
   <body>
     <h1>Websocket test site</h1>
-    <div id="chat"></div>
+    <div id="chat-container">
+      
+    </div>
+    <div id="chat">
+      <input type="text" name="text_message" id="text-message"/>
+      <input type="button" value="SEND" id="send-message">
+    </div>
   </body>
 </html>
