@@ -13,13 +13,19 @@ use App\User;
 use File;
 use Log;
 use App;
+use App\Message;
+use App\LineAccount;
+use Ratchet\MessageComponentInterface;
+use Ratchet\ConnectionInterface;
 
-class LineChatController extends Controller
+class LineChatController extends Controller implements MessageComponentInterface
 {
     //
 
     private $bot;
+    private $user;
     public function __construct(){
+        $this->clients = new \SplObjectStorage;
     	$config = [
 	        'channelId' => '1476076743',
 	        'channelSecret' => 'c3b5f65446faefcf1471609353cc943c',
@@ -29,11 +35,14 @@ class LineChatController extends Controller
     }
 
     public function index(Request $request){
+        
+    }
+    
+    public function login(){
         return view('login');
     }
     
     public function verifined(Request $request){
-        
         // if request LINE login success
         //https://developers.line.me/web-login/integrating-web-login#redirect_to_web_site
         if( $request->has('code') ){
@@ -48,8 +57,15 @@ class LineChatController extends Controller
             ));
             
             if($response->statusCode == 200){
+                // Store LINE accounts
                 $data = json_decode($response->body);
+                $displayName = '';
+                $pictureUrl = '';
+                $statusMessage = '';
+                $profile = $this->bot->getUserProfile($data->mid);
+               
                 $res = $this->bot->sendText($data->mid, 'Welcome to Tenposs');
+                return redirect('chat/'.$data->mid);
                 
             }
             
@@ -59,10 +75,58 @@ class LineChatController extends Controller
             return view('login',['errors' => $request->input('errorMessage') ]);
         }
         
-        
-         dd($request->all());
     }
 
+    public function chat($mid){
+      
+        return view('chat');
+    }
+    
+    public function chatdemo(){
+        return view('chat');
+    }
+    
+    protected $clients;
+    
+   
 
+  public function onOpen(ConnectionInterface $conn) {
+    // Store the new connection to send messages to later
+    $this->clients->attach($conn);
+    echo "New connection! ({$conn->resourceId})\n";
+    $res = $this->bot->sendText('u9c1af340d8af0d5aa7e63fffa2c2aa28', 'Welcome to Tenposs');
+  
+    $numRecv = count($this->clients) - 1;
+     
+
+    // When a new client connects, greet him.
+    $conn->send(sprintf('Welcome connection #%d. You are now %d user(s) in this chat.', $conn->resourceId, $numRecv));
+
+    // And tell the other clients about the new user.
+    foreach ($this->clients as $client) {
+       
+      if ($conn !== $client) {
+        $client->send(sprintf('Connection %d has connected to %d other user(s)', $conn->resourceId, $numRecv));
+      }
+    }
+  }
+
+  public function onMessage(ConnectionInterface $from, $msg) {
+    // The clients are, in this example, are not sending any messages.
+  }
+
+  public function onClose(ConnectionInterface $conn) {
+    // The connection is closed, remove it, as we can no longer send it
+    // messages.
+    $this->clients->detach($conn);
+
+    echo "Connection {$conn->resourceId} has disconnected\n";
+  }
+
+  public function onError(ConnectionInterface $conn, \Exception $e) {
+    echo "An error has occurred: {$e->getMessage()}\n";
+
+    $conn->close();
+  }
     
 }

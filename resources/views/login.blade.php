@@ -22,7 +22,7 @@
 </head>
 <body >
     <div style="position: relative">
-        <a  href="https://access.line.me/dialog/oauth/weblogin?response_type=code&client_id=1477592731&redirect_uri=https://tenposs-phanvannhien.c9users.io/verifined&state=">
+        <a  href="https://access.line.me/dialog/oauth/weblogin?response_type=code&client_id=1477592731&redirect_uri=https://tenposs-phanvannhien.c9users.io/verifined&state=123abc">
             LOGIN LINE
         </a>
     </div>

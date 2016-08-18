@@ -15,11 +15,16 @@ class LineAccountsTable extends Migration
         //
          Schema::create('line_accounts', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('user_id');
-            $table->string('mid')->unique();
-            $table->string('displayName');
-            $table->string('pictureUrl');
-            $table->string('statusMessage');
+            $table->integer('user_id');
+            $table->string('mid')->unique();// Line ID
+            $table->string('displayName')->nullable();
+            $table->string('pictureUrl')->nullable();
+            $table->string('statusMessage')->nullable();
+            $table->string('access_token')->unique();
+            $table->string('token_type');
+            $table->string('expires_in');
+            $table->string('refresh_token');
+            $table->string('scope')->nullable();
             $table->timestamps();
         });
     }
