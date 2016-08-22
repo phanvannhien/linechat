@@ -47,6 +47,9 @@ class LineChatController extends Controller implements MessageComponentInterface
         
         
     }
+    /*
+    * Login line view
+    */
     
     public function login(){
         return view('login');
@@ -72,7 +75,7 @@ class LineChatController extends Controller implements MessageComponentInterface
                 $displayName = '';
                 $pictureUrl = '';
                 $statusMessage = '';
-                $profile = $this->bot->getUserProfile($data->mid);
+                
                 //$res = $this->bot->sendText($data->mid, 'Welcome to Tenposs');
                 return redirect('chat/'.$data->mid);
                 
@@ -87,8 +90,8 @@ class LineChatController extends Controller implements MessageComponentInterface
     }
 
     public function chat($mid){
-      
-        return view('chat',['mid' => $mid]);
+        $profile = $this->bot->getUserProfile($mid);
+        return view('chat',['profile' => json_encode($profile['contacts'][0]) ]);
     }
     
 
@@ -144,5 +147,9 @@ class LineChatController extends Controller implements MessageComponentInterface
 
     $conn->close();
   }
+    
+    public function chatAdmin(){
+        return view('admin.chat.message');
+    }
     
 }

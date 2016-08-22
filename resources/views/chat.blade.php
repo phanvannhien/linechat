@@ -2,60 +2,49 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Websocket test site</title>
-    <script type="text/javascript" src="https://tenposs-phanvannhien.c9users.io/assets/js/jquery-1.11.2.min.js"></script>
-    <script type="text/javascript">
-      // Edit these variables to match your environent.
-      var ws_host = 'tenposs-phanvannhien.c9users.io';
-      var ws_port = '80';
-      var ws_folder = '';
-      var ws_path = '/websocket';
-
-      // We are using wss:// as the protocol because Cloud9 is using
-      // HTTPS. In case you try to run this, using HTTP, make sure
-      // to change this to ws:// .
-      var ws_url = 'wss://' + ws_host;
-      if (ws_port != '80' && ws_port.length > 0) {
-        ws_url += ':' + ws_port;
-      }
-      ws_url += ws_folder + ws_path;
-      var conn = new WebSocket(ws_url);
-      conn.onopen = function(e) {
-        // Spit this out in the console so we can tell if the
-        // connection was successfull.
-        var u = $('<p/>').text('Welcome! --||{{ $mid }}||-- Can i help you.?');
-        $('#chat-container').append(u);
-      };
-      conn.onmessage = function(e) {
-        // When ever a message is recieved, from the server, append
-        // the message to the existing text in the chat area.
-        $('#chat-container').append(e.data);
-      };
-      conn.onclose =function(e){
-          console.log('Connection closed');
-      };
-      
-      $(document).ready(function(){
-         $('#send-message').on('click',function(e){
-            e.preventDefault();
-             console.log('Send'+$('#text-message').val());
-            $('#chat-container').append($('#text-message').val());
-            conn.send( {"mid": "<?php echo $mid ?>" , "data": $('#text-message').val() } );
-          });
-      });
-     
-      
-      
+    <title>Enduser Chat</title>
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ secure_asset('assets/css/front-chat.css') }} "/>
+    <script type="text/javascript" src="{{ secure_asset('assets/js/jquery-1.11.2.min.js') }} "></script>
+    <script>
+      var profile = jQuery.parseJSON('<?php echo ($profile) ?>');
     </script>
+    <script type="text/javascript" src="{{ secure_asset('assets/plugins/jquery.scrollbar/jquery.scrollbar.min.js') }} "></script>
+    <script type="text/javascript" src="{{ secure_asset('assets/js/front-chat.js') }} "></script>
+   
   </head>
   <body>
-    <h1>Websocket test site</h1>
-    <div id="chat-container">
+    <div class="container">
+      <p>&nbsp;</p>  
+      <div class="panel panel-info">
+        <div class="panel-heading">Tenposs</div>
+        <div class="panel-body">
+          <div id="room1" class="rooms">
+              <ul class="messages scrollbar-macosx"></ul>
+          </div>
+        </div>
+        <div class="panel-footer">
+          <div class="input-group">
+              <input type="text" class="form-control message_input" placeholder="Enter message...">
+              <span class="input-group-btn">
+                  <button class="btn btn-default send_message" type="button">Send</button>
+              </span>
+          </div><!-- /input-group -->
+        </div>
+      </div><!--end panel --> 
       
-    </div>
-    <div id="chat">
-      <input type="text" name="text_message" id="text-message"/>
-      <input type="button" value="SEND" id="send-message">
-    </div>
+      <div class="message_template" style="display:none">
+          <li class="message">
+              <div class="avatar"></div>
+              <div class="text_wrapper">
+                  <div class="text"></div>
+              </div>
+          </li>
+      </div>
+      
+    </div><!--end container -->  
   </body>
 </html>
