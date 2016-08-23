@@ -32,13 +32,13 @@ class BasicMultiRoomServer extends AbstractMultiRoomServer
         /** save messages to a database, etc... */
     }
 
-    protected function createClient(ConnectionInterface $conn, $name)
+    protected function createClient(ConnectionInterface $conn, $name,$mid)
     {
         $client = new ConnectedClient;
         $client->setResourceId($conn->resourceId);
         $client->setConnection($conn);
         $client->setName($name);
-
+        $client->setMid($mid);
         return $client;
     }
 

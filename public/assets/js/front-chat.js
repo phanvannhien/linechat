@@ -68,9 +68,11 @@ sendMessage = function (text) {
 // Connect to server 
 function connectToChat() {
     conn = new WebSocket(ws_url);
+    
+    // client connected
     conn.onopen = function() {
         var params = {
-            'roomId': 'room'+profile.mid,
+            'roomId': room_id,
             'mid': profile.mid,
             'userName': profile.displayName,
             'from': 'enduser',
@@ -82,6 +84,7 @@ function connectToChat() {
         conn.send(JSON.stringify(params));
     };
 
+    // client get message from server
     conn.onmessage = function(e) {
         console.log('User get message from server:');
         console.log(e);

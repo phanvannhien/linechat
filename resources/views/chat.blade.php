@@ -11,10 +11,10 @@
     <script type="text/javascript" src="{{ secure_asset('assets/js/jquery-1.11.2.min.js') }} "></script>
     <script>
       var profile = jQuery.parseJSON('<?php echo ($profile) ?>');
+      var room_id = '{{ $room_id }}';
     </script>
     <script type="text/javascript" src="{{ secure_asset('assets/plugins/jquery.scrollbar/jquery.scrollbar.min.js') }} "></script>
     <script type="text/javascript" src="{{ secure_asset('assets/js/front-chat.js') }} "></script>
-   
   </head>
   <body>
     <div class="container">
@@ -35,7 +35,6 @@
           </div><!-- /input-group -->
         </div>
       </div><!--end panel --> 
-      
       <div class="message_template" style="display:none">
           <li class="message">
               <div class="avatar"></div>
@@ -44,7 +43,6 @@
               </div>
           </li>
       </div>
-      
     </div><!--end container -->  
   </body>
 </html>

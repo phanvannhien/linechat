@@ -14,12 +14,12 @@ class Chat extends Migration
     {
        Schema::create('messages', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('from_user_id');
-            $table->string('to_user_id');
+            $table->string('room_id');
+            $table->string('from_mid');
+            $table->string('to_mid');
             $table->string('message');
             $table->timestamps();
-            
-            $table->index(['from_user_id','to_user_id']);
+            //$table->index(array('room_id','from_mid','to_mid'));
         });
     }
 

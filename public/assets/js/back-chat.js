@@ -14,6 +14,11 @@ var Message;
 var getMessageText, message_side, sendMessage;
 message_side = 'right';
 
+
+
+
+
+
 Message = function (arg) {
     this.text = arg.text, this.message_side = arg.message_side;
     this.draw = function (_this) {
@@ -27,6 +32,9 @@ Message = function (arg) {
             }, 0);
         };
     }(this);
+    
+    
+    
     
     return this;
 };
@@ -70,8 +78,8 @@ function connectToChat() {
     conn = new WebSocket(ws_url);
     conn.onopen = function() {
         var params = {
-            'roomId': 'room'+profile.mid,
-            'mid': profile.mid,
+            'roomId': 'uaa357d613605ebf36f6366a7ce896180',
+            'mid': 'uaa357d613605ebf36f6366a7ce896180',
             'userName': profile.displayName,
             'from': 'client',
             'action': 'connect'
@@ -86,25 +94,9 @@ function connectToChat() {
         console.log(e);
         var data = JSON.parse(e.data);
 
-        if (data.hasOwnProperty('message') && data.hasOwnProperty('from')) {
-            message = new Message({
-                text: data.message,
-                message_side: 'left'
-            });
-            message.draw();
-            
-            //displayChatMessage(data.from.name, data.message);
-        }
-        else if (data.hasOwnProperty('message')) {
-            message = new Message({
-                text: data.message,
-                message_side: 'left'
-            });
-            message.draw();
-            
-        }
-        else if (data.hasOwnProperty('type')) {
+       if (data.hasOwnProperty('type')) {
             if (data.type == 'list-users' && data.hasOwnProperty('clients')) {
+                displayListEndUsers(data.clients);
                 //displayChatMessage(null, 'There are ' + data.clients.length + ' users connected');
             }
             else if (data.type == 'user-started-typing') {
@@ -164,8 +156,26 @@ function removeUserTypingMessage(from) {
 }
 
 
+function displayListEndUsers(endUsers){
+    $(endUsers).each(function(index,item){
+        if( item.mid !== item.roomid ){
+            renderBox(item);
+        }
+    });
+}
 
-
+function renderBox(enduser){
+    
+    var $template;
+    $template = $($('#room-template .rooms').clone().html());
+    $template.attr('id',enduser.roomid)
+        .find('.panel-heading').html(enduser.name);
+    console.log($template);    
+    $('#message-wrapper').append($template);
+    return setTimeout(function () {
+        return $template.addClass('appeared');
+    }, 0);
+}
 
 
 $(document).ready(function(){

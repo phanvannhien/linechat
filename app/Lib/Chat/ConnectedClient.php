@@ -22,6 +22,11 @@ class ConnectedClient implements ConnectedClientInterface
      */
     protected $name;
 
+     /**
+     * @var string
+     */
+    protected $mid;
+
     /**
      * @return mixed
      */
@@ -69,6 +74,22 @@ class ConnectedClient implements ConnectedClientInterface
     {
         $this->name = $name;
     }
+    
+    /**
+     * @return string
+     */
+    public function getMid()
+    {
+        return $this->mid;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setMid($mid)
+    {
+        $this->mid = $mid;
+    }
 
     /**
      * @return array
@@ -76,7 +97,8 @@ class ConnectedClient implements ConnectedClientInterface
     public function asArray()
     {
         return array(
-            'name'=>$this->name,
+            'name' => $this->name,
+            'mid'=> $this->mid
         );
     }
 

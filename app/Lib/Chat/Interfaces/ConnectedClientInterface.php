@@ -35,6 +35,16 @@ interface ConnectedClientInterface
      * @param string $name
      */
     public function setName($name);
+    
+    /**
+     * @return string
+     */
+    public function getMid();
+
+    /**
+     * @param string $name
+     */
+    public function setMid($mid);
 
     /**
      * @return array

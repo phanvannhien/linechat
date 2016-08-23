@@ -27,23 +27,51 @@
 			</div>
 			<!-- end sidebar -->
 			<div class="content">
-			    <div id="room1" class="rooms">
-			        <div class="panel panel-default">
-			            <div class="panel-heading">Nhien</div>
-			            <div class="panel-body">
-			                <ul class="messages scrollbar-macosx"></ul>
-			            </div>
-			            <div class="panel-footer">
-			                <div class="input-group">
-                                <input type="text" class="form-control message_input" placeholder="Enter message...">
-                                <span class="input-group-btn">
-                                    <button class="btn btn-default send_message" type="button">Send</button>
-                                </span>
-                            </div><!-- /input-group -->
-			                
-			            </div>
-			        </div>
+				<div class="rows">
+					<div class="col-lg-3 col-md-3">
+						<div id="enduser-chat-list" style="margin-top:5px;">
+							<div class="list-group">
+								<div class="list-group-item">
+									<div class="media">
+										<div class="media-left">
+											<a href="#">
+											  <img class="media-object" src="..." alt="...">
+											</a>
+										</div>
+										<div class="media-body">
+											<h4 class="media-heading">Media heading</h4>
+											...
+										</div>
+									</div>
+								</div>
+							</div>
+							
+						</div>
+					</div>
+					<div id="message-wrapper" class="col-lg-9 col-md-9">
+						
+					</div>
+				</div>
+			    
+			    <div id="room-template" class="hide">
+			    	<div id="" class="rooms">
+				        <div class="panel panel-default">
+				            <div class="panel-heading"></div>
+				            <div class="panel-body">
+				                <ul class="messages scrollbar-macosx"></ul>
+				            </div>
+				            <div class="panel-footer">
+				                <div class="input-group">
+	                                <input type="text" class="form-control message_input" placeholder="Enter message...">
+	                                <span class="input-group-btn">
+	                                    <button class="btn btn-default send_message" type="button">Send</button>
+	                                </span>
+	                            </div><!-- /input-group -->
+				            </div>
+				        </div>
+				    </div>
 			    </div>
+			    
 			</div>	<!-- end main-content-->
 			<div class="clearfix"></div>
 		</div>	<!--end main -->

@@ -17,7 +17,9 @@ class CreateUsersTable extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
-            $table->text('data');
+            $table->string('channelId')->unique();
+            $table->string('channelSecret');
+            $table->string('channelMid');
             $table->rememberToken();
             $table->timestamps();
         });
