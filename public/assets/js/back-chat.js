@@ -20,13 +20,20 @@ message_side = 'right';
 
 
 Message = function (arg) {
-    this.text = arg.text, this.message_side = arg.message_side;
+    this.text = arg.text;
+    this.message_side = arg.message_side;
+    this.roomid = arg.roomid;
+    this.avatar = $('<img/>').attr('src',arg.avatar);
+    
     this.draw = function (_this) {
+        console.log('render message');
         return function () {
             var $message;
             $message = $($('.message_template').clone().html());
             $message.addClass(_this.message_side).find('.text').html(_this.text);
-            $('.messages').append($message);
+            $message.find('.avatar').html(_this.avatar);
+          
+            $('div#box-'+_this.roomid+' .messages').append($message);
             return setTimeout(function () {
                 return $message.addClass('appeared');
             }, 0);
@@ -81,23 +88,28 @@ function connectToChat() {
             'roomId': 'uaa357d613605ebf36f6366a7ce896180',
             'mid': 'uaa357d613605ebf36f6366a7ce896180',
             'userName': profile.displayName,
+            'profile': profile,
             'from': 'client',
             'action': 'connect'
         };
         console.log('User connected:');
-        console.log(params);
         conn.send(JSON.stringify(params));
     };
 
     conn.onmessage = function(e) {
-        console.log('User get message from server:');
-        console.log(e);
+        console.log('User get message from client:');
+        console.log(e.data);
         var data = JSON.parse(e.data);
 
        if (data.hasOwnProperty('type')) {
+           
+           
             if (data.type == 'list-users' && data.hasOwnProperty('clients')) {
                 displayListEndUsers(data.clients);
-                //displayChatMessage(null, 'There are ' + data.clients.length + ' users connected');
+            }
+             else if (data.type == 'message' && data.hasOwnProperty('message')) {
+                 
+                displayClientsMessage(data)
             }
             else if (data.type == 'user-started-typing') {
                // displayUserTypingMessage(data.from)
@@ -156,25 +168,63 @@ function removeUserTypingMessage(from) {
 }
 
 
+
+
 function displayListEndUsers(endUsers){
     $(endUsers).each(function(index,item){
         if( item.mid !== item.roomid ){
-            renderBox(item);
+            if( checkExistBoxItems(item) )
+                renderChatLists(item);
+                renderChatBox(item);
         }
     });
 }
 
-function renderBox(enduser){
+function checkExistBoxItems(enduser){
+    $('#members-template .list-group-item').each(function(index,item){
+       if( enduser.roomid == $(item).attr('id') ){
+           return false;
+       } 
+    });
+    return true;
+}
+
+
+function renderChatLists(enduser){
+    var $template;
+    $template = $($('#members-template').clone().html());
+    $template.attr('id','list-'+enduser.roomid);
+    $template.find('.media-object').attr('src',enduser.profile.pictureUrl+'/small');
+    $template.find('.media-heading').html(enduser.name);
+    $template.find('.media-body p').text(enduser.profile.statusMessage);
+      
+    $('#enduser-chat-list').append($template);
+    return setTimeout(function () {
+        return $template.addClass('appeared');
+    }, 0);
+}
+
+
+function renderChatBox(enduser){
     
     var $template;
     $template = $($('#room-template .rooms').clone().html());
-    $template.attr('id',enduser.roomid)
+    $template.attr('id','box-'+enduser.roomid)
         .find('.panel-heading').html(enduser.name);
-    console.log($template);    
     $('#message-wrapper').append($template);
     return setTimeout(function () {
         return $template.addClass('appeared');
     }, 0);
+}
+
+function displayClientsMessage(data){
+    var message = new Message({
+        text: data.message,
+        roomid: data.roomid,
+        message_side: 'right',
+        avatar: data.from.profile.pictureUrl
+    });
+    message.draw();
 }
 
 

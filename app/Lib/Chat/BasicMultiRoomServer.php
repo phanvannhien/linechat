@@ -3,6 +3,8 @@ namespace App\Lib\Chat;
 
 use App\Lib\Chat\Interfaces\ConnectedClientInterface;
 use Ratchet\ConnectionInterface;
+use App\Message;
+
 
 class BasicMultiRoomServer extends AbstractMultiRoomServer
 {
@@ -30,15 +32,19 @@ class BasicMultiRoomServer extends AbstractMultiRoomServer
     protected function logMessageReceived(ConnectedClientInterface $from, $message, $timestamp)
     {
         /** save messages to a database, etc... */
+        Message::create([
+            ''
+        ]);
     }
 
-    protected function createClient(ConnectionInterface $conn, $name,$mid)
+    protected function createClient(ConnectionInterface $conn, $name,$mid,$profile)
     {
         $client = new ConnectedClient;
         $client->setResourceId($conn->resourceId);
         $client->setConnection($conn);
         $client->setName($name);
         $client->setMid($mid);
+        $client->setProfile($profile);
         return $client;
     }
 

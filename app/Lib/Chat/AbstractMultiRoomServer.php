@@ -12,6 +12,8 @@ use Ratchet\Server\IoServer;
 use Ratchet\WebSocket\WsServer;
 use ReflectionClass;
 
+use App\Message;
+
 abstract class AbstractMultiRoomServer implements MessageComponentInterface
 {
 
@@ -100,7 +102,7 @@ abstract class AbstractMultiRoomServer implements MessageComponentInterface
      * @param $name
      * @return ConnectedClientInterface
      */
-    abstract protected function createClient(ConnectionInterface $conn, $name,$mid);
+    abstract protected function createClient(ConnectionInterface $conn, $name,$mid,$profile);
 
     public function __construct()
     {
@@ -109,7 +111,7 @@ abstract class AbstractMultiRoomServer implements MessageComponentInterface
 
         $refl = new ReflectionClass(get_class());
         $this->validActions = array();
-        foreach ($refl->getConstants() AS $key=>$value) {
+        foreach ($refl->getConstants() AS $key => $value) {
             if (substr($key, 0, 6) === 'ACTION') {
                 $this->validActions[$key] = $value;
             }
@@ -145,13 +147,14 @@ abstract class AbstractMultiRoomServer implements MessageComponentInterface
         if ($msg['action'] != self::ACTION_USER_CONNECTED) {
             $client = $this->findClient($conn);
             $roomId = $this->findClientRoom($client);
+            echo 'Clients to send message'. json_encode($client);
         }
 
         switch ($msg['action']) {
             case self::ACTION_USER_CONNECTED:
                 
                 $roomId = $this->makeRoom($msg['roomId']);
-                $client = $this->createClient($conn, $msg['userName'],$msg['mid']);
+                $client = $this->createClient($conn, $msg['userName'],$msg['mid'],$msg['profile']);
                 $this->connectUserToRoom($client, $roomId);
                 
                 if( $msg['from'] == 'client' ){
@@ -168,6 +171,8 @@ abstract class AbstractMultiRoomServer implements MessageComponentInterface
                 $this->sendListUsersMessage($client, $roomId);
                 break;
             case self::ACTION_MESSAGE_RECEIVED:
+                
+                
                 $msg['timestamp'] = isset($msg['timestamp']) ? $msg['timestamp'] : time();
                 $this->logMessageReceived($client, $roomId, $msg['message'], $msg['timestamp']);
                 $this->sendMessage($client, $roomId, $msg['message'], $msg['timestamp']);
@@ -278,12 +283,14 @@ abstract class AbstractMultiRoomServer implements MessageComponentInterface
     {
         $dataPacket = array(
             'type'=>self::PACKET_TYPE_MESSAGE,
+            'roomid' => $roomId,
             'from'=>$client->asArray(),
             'timestamp'=>$timestamp,
             'message'=>$this->makeMessageReceivedMessage($client, $message, $timestamp),
         );
 
         $clients = $this->findRoomClients($roomId);
+        unset($clients[$client->getResourceId()]);
         $this->sendDataToClients($clients, $dataPacket);
     }
 
@@ -380,6 +387,7 @@ abstract class AbstractMultiRoomServer implements MessageComponentInterface
             $clients[] = array(
                 'name'=> $roomClient->getName(),
                 'mid' => $roomClient->getMid(),
+                'profile' => $roomClient->getProfile(),
                 'roomid' => $roomId
             );
         }

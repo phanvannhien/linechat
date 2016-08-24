@@ -52,6 +52,7 @@
   height: 60px;
   border-radius: 50%;
   display: inline-block;
+  overflow:hidden;
 }
 .messages .message .text_wrapper {
   display: inline-block;

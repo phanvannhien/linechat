@@ -8,5 +8,5 @@ class Message extends Model
 {
     //
     protected $table = 'messages';
-    protected $fillable = ['message'];
+    protected $fillable = ['room_id','from_mid','to_mid','message'];
 }

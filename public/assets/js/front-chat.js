@@ -58,6 +58,7 @@ sendMessage = function (text) {
     var params = {
         'message': text,
         'action': 'message',
+        'from' : 'enduser',
         'timestamp': d.getTime()/1000
     };
     conn.send(JSON.stringify(params));
@@ -76,10 +77,10 @@ function connectToChat() {
             'mid': profile.mid,
             'userName': profile.displayName,
             'from': 'enduser',
+            'profile' : profile,
             'action': 'connect'
         };
         console.log('User request connect:');
-        console.log(params);
         console.log('---------------------------------------------------------');
         conn.send(JSON.stringify(params));
     };
@@ -87,7 +88,7 @@ function connectToChat() {
     // client get message from server
     conn.onmessage = function(e) {
         console.log('User get message from server:');
-        console.log(e);
+        console.log(e.data);
         console.log('---------------------------------------------------------');
         var data = JSON.parse(e.data);
 

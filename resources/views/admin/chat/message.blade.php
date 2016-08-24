@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="{{ secure_asset('assets/css/front-chat.css') }}">
 	
 	<style>
-	    .rooms{
+	    .panel{
 	        max-width: 300px;
 	        margin: 5px;
 	        float:left;
@@ -29,28 +29,11 @@
 			<div class="content">
 				<div class="rows">
 					<div class="col-lg-3 col-md-3">
-						<div id="enduser-chat-list" style="margin-top:5px;">
-							<div class="list-group">
-								<div class="list-group-item">
-									<div class="media">
-										<div class="media-left">
-											<a href="#">
-											  <img class="media-object" src="..." alt="...">
-											</a>
-										</div>
-										<div class="media-body">
-											<h4 class="media-heading">Media heading</h4>
-											...
-										</div>
-									</div>
-								</div>
-							</div>
-							
+						<div id="" style="margin-top:5px;">
+							<div id ="enduser-chat-list" class="list-group"></div>
 						</div>
 					</div>
-					<div id="message-wrapper" class="col-lg-9 col-md-9">
-						
-					</div>
+					<div id="message-wrapper" class="col-lg-9 col-md-9"></div>
 				</div>
 			    
 			    <div id="room-template" class="hide">
@@ -72,6 +55,30 @@
 				    </div>
 			    </div>
 			    
+			    <div id="members-template" class="hide">
+				    <div class="list-group-item">
+						<div class="media">
+							<div class="media-left">
+								<a href="#">
+								  <img class="media-object" src="" alt="">
+								</a>
+							</div>
+							<div class="media-body">
+								<h4 class="media-heading"></h4>
+								<p></p>
+							</div>
+						</div>
+					</div>
+			    </div>
+			    
+			    <div class="message_template" style="display:none">
+			          <li class="message">
+			              <div class="avatar"></div>
+			              <div class="text_wrapper">
+			                  <div class="text"></div>
+			              </div>
+			          </li>
+			      </div>
 			</div>	<!-- end main-content-->
 			<div class="clearfix"></div>
 		</div>	<!--end main -->

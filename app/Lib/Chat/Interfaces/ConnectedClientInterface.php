@@ -45,6 +45,16 @@ interface ConnectedClientInterface
      * @param string $name
      */
     public function setMid($mid);
+    
+    /**
+     * @return array
+     */
+    public function getProfile();
+
+    /**
+     * @param array $profile
+     */
+    public function setProfile($profile);
 
     /**
      * @return array
