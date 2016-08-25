@@ -13,10 +13,11 @@
 
 
 Route::any('/','LineChatController@index');
-Route::get('/login','LineChatController@login');
+Route::get('/login',array( 'as' => 'line.login', 'uses' => 'LineChatController@login'));
+Route::get('/line/verifined/token/{mid}',array( 'as' => 'line.verifined.token', 'uses' => 'LineChatController@verifinedToken'));
 Route::get('/verifined','LineChatController@verifined');
-Route::get('/chat/{mid}','LineChatController@chat');
-
+Route::get('/chat/{user_id}','LineChatController@chat');
+Route::get('/chat/screen/{user_id}','LineChatController@chatScreen');
 
 
 

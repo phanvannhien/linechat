@@ -20,6 +20,8 @@ class CreateUsersTable extends Migration
             $table->string('channelId')->unique();
             $table->string('channelSecret');
             $table->string('channelMid');
+            $table->string('client_id');
+            $table->string('client_secret');
             $table->rememberToken();
             $table->timestamps();
         });

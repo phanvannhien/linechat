@@ -232,12 +232,10 @@ $(document).ready(function(){
     jQuery('.scrollbar-macosx').scrollbar();
     connectToChat();
     $('.send_message').click(function (e) {
-        console.log('Action click send message');
         return sendMessage(getMessageText());
     });
     $('.message_input').keyup(function (e) {
         if (e.which === 13) {
-            console.log('Action enter send message');
             return sendMessage(getMessageText());
         }
     });
