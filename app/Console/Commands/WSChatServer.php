@@ -5,7 +5,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
-use App\Http\Controllers\LineChatController;
+
+
 class WSChatServer extends Command {
 	/**
 	 * The console command name.
@@ -39,8 +40,13 @@ class WSChatServer extends Command {
 		$this->info("Starting chat web socket server on port " . $port);
 		$port = 8181;
 		$server = new \App\Lib\Chat\BasicMultiRoomServer;
-
-		\App\Lib\Chat\BasicMultiRoomServer::run($server, $port);
+		$ip='0.0.0.0';
+		 
+		$wsServer = new WsServer($server);
+        $http = new HttpServer($wsServer);
+        $server = IoServer::factory($http, $port, $ip);
+        $server->run();
+        
 		
 	}
 	/**

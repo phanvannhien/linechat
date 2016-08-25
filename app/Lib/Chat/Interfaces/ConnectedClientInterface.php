@@ -55,6 +55,16 @@ interface ConnectedClientInterface
      * @param array $profile
      */
     public function setProfile($profile);
+    
+    /**
+     * @return bool
+     */
+    public function getisClients();
+
+    /**
+     * @param bool $bool
+     */
+    public function setisClients($bool);
 
     /**
      * @return array

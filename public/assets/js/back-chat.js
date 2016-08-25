@@ -89,7 +89,7 @@ function connectToChat() {
             'mid': 'uaa357d613605ebf36f6366a7ce896180',
             'userName': profile.displayName,
             'profile': profile,
-            'from': 'client',
+            'from': 'clients',
             'action': 'connect'
         };
         console.log('User connected:');
@@ -98,7 +98,7 @@ function connectToChat() {
 
     conn.onmessage = function(e) {
         console.log('User get message from client:');
-        console.log(e.data);
+        console.log(JSON.parse(e.data));
         var data = JSON.parse(e.data);
 
        if (data.hasOwnProperty('type')) {

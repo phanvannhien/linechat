@@ -76,13 +76,15 @@ function connectToChat() {
             'roomId': room_id,
             'mid': profile.mid,
             'userName': profile.displayName,
-            'from': 'enduser',
+            'from': 'endusers',
             'profile' : profile,
             'action': 'connect'
         };
-        console.log('User request connect:');
-        console.log('---------------------------------------------------------');
         conn.send(JSON.stringify(params));
+        console.log('User request connect:');
+         console.log(params);
+        console.log('----------------------------------------------------------------------------------------------');
+        
     };
 
     // client get message from server

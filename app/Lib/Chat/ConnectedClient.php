@@ -31,6 +31,12 @@ class ConnectedClient implements ConnectedClientInterface
      * @var array
      */
     protected $profile;
+    
+    /**
+     * @var bool
+     */
+    protected $isClients;
+
 
     /**
      * @return mixed
@@ -81,6 +87,14 @@ class ConnectedClient implements ConnectedClientInterface
     }
     
     /**
+    * @param string $name
+    */
+    public function setMid($mid)
+    {
+        $this->mid = $mid;
+    }
+    
+    /**
      * @return string
      */
     public function getMid()
@@ -104,14 +118,21 @@ class ConnectedClient implements ConnectedClientInterface
         return $this->profile;
     }
 
-    /**
-     * @param string $name
+     /**
+     * @param bool
      */
-    public function setMid($mid)
+    public function setisClients($bool)
     {
-        $this->mid = $mid;
+        $this->isClients = $bool;
     }
 
+     /**
+     * @return bool
+     */
+    public function getisClients()
+    {
+        return $this->isClients;
+    }
 
     /**
      * @return array
