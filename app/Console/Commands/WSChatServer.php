@@ -39,7 +39,7 @@ class WSChatServer extends Command {
 		$port = intval($this->option('port'));
 		$this->info("Starting chat web socket server on port " . $port);
 		$port = 8181;
-		$server = new \App\Lib\Chat\BasicMultiRoomServer;
+		$server = new \App\Lib\Chat\MultiRoomServer;
 		$ip='0.0.0.0';
 		 
 		$wsServer = new WsServer($server);

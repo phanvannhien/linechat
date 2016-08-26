@@ -107,7 +107,8 @@ function connectToChat() {
             if (data.type == 'list-users' && data.hasOwnProperty('clients')) {
                 displayListEndUsers(data.clients);
             }
-             else if (data.type == 'message' && data.hasOwnProperty('message')) {
+            
+            else if (data.type == 'message' && data.hasOwnProperty('message')) {
                  
                 displayClientsMessage(data)
             }

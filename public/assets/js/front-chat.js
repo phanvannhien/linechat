@@ -82,7 +82,7 @@ function connectToChat() {
         };
         conn.send(JSON.stringify(params));
         console.log('User request connect:');
-         console.log(params);
+        console.log(params);
         console.log('----------------------------------------------------------------------------------------------');
         
     };
