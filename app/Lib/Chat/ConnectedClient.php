@@ -141,6 +141,7 @@ class ConnectedClient implements ConnectedClientInterface
     {
         return array(
             'name' => $this->name,
+            'isClients' => $this->getisClients(),
             'mid' => $this->mid,
             'profile' => $this->profile 
         );

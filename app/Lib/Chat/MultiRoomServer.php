@@ -24,6 +24,7 @@ use App\User;
 use Log;
 use Debugbar;
 use ReflectionClass;
+use DB;
 
 // BOT Server
 use LINE\LINEBot;
@@ -141,62 +142,61 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     public function onMessage(ConnectionInterface $conn, $msg)
     {
         echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
-        echo "Packet received: ".$msg.PHP_EOL;
-        $msg = json_decode($msg, true);
-        echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
-        
-        
-        if (!isset($msg['action'])) {
+        $msg = json_decode($msg);
+        echo "Packet received: ".json_encode($msg).PHP_EOL;
+       
+        if (!isset($msg->action)) {
             throw new MissingActionException('No action specified');
         }
-        $this->checkActionExists($msg['action']);
-
-        if ($msg['action'] != self::ACTION_USER_CONNECTED) {
+        
+        $this->checkActionExists($msg->action);
+        
+        if ( $msg->action != self::ACTION_USER_CONNECTED) {
+            
+            
+            
+            
+            
             $client = $this->findClient($conn);
             $roomId = $this->findClientRoom($client);
+            echo 'Client found:'.PHP_EOL;
+            echo json_encode($client ).PHP_EOL;
+            echo 'Room found:'.PHP_EOL;
+            echo json_encode($roomId).PHP_EOL;
+            echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
+                
         }
-
-        switch ($msg['action']) {
+        
+        
+        switch ( $msg->action ) {
             case self::ACTION_USER_CONNECTED:
                 
-                $fromClients = false;
-                $roomId = $this->makeRoom($msg['roomId']);
+                $fromClients = true;
+                $roomId = $this->makeRoom( $msg->roomId );
 
-                if( $msg['from'] == 'clients' )
-                    $fromClients = true;
-                    
-                $client = $this->createClient($conn, $msg['userName'],$msg['mid'],$msg['profile'],$fromClients);
+                if( $msg->from->user_type == 'endusers' )
+                    $fromClients = false;
+                
+                // Create new client    
+                $client = $this->createClient($conn, 
+                    $msg->from->profile->displayName,
+                    $msg->from->profile->mid,
+                    $msg->from->profile,
+                    $fromClients);
+                
+                
+                echo 'Created client'.json_encode($client);
+                // Conntect client to room
                 $this->connectUserToRoom($client, $roomId);
                 
-                echo 'This rooms:'.PHP_EOL;
+                echo 'Client connected:'.PHP_EOL;
+                echo json_encode($client->asArray()).PHP_EOL;
+                echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
+                
+                echo 'All rooms:'.PHP_EOL;
                 echo json_encode($this->getRooms()).PHP_EOL;
                 echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
-
-                // Send update list clients to clients
-                //$this->sendListUsersMessage($client, $roomId);
-                
-                
-                // is Endusers
-                if( ! $fromClients ){
-                   
-                    // send message history to enduser connected
-                    $this->sendUserMessageHistory($roomId,$client);
-                    // If has clients in rooms, send enduser to clients
-                    if( $findisClients = $this->findClientsisAdmin($roomId) ){
-                        $this->sendUserMessageHistory($roomId,$client);
-                    }
-            
-                }
-                
-                // is clients
-                if( $fromClients ){
-                   
-                    // load history message include clients online and offline
-                    $this->sendUserMessageHistory($roomId,$client);
-                   
-            
-                }
-                
+                //$this->sendUserMessageHistory($roomId,$client);
                 
                 
                 break;
@@ -204,16 +204,31 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
                 //$this->sendListUsersMessage($client, $roomId);
                 break;
             case self::ACTION_MESSAGE_RECEIVED:
+               
+                $msg->timestamp = isset($msg->timestamp) ? $msg->timestamp : time();
+                // if Clients send message to endusers
+                if( $client->getisClients() && isset($msg->to) ){
+                    $toClient = $this->findClientByMid($roomId,$msg->to);
+                    $to_mid = $msg->to;
+                }else{
+                    
+                    $toClient = $this->findClientByMid($roomId,$roomId);
+                    echo 'Tim thang client: '. json_encode($toClient->asArray());
+                    $to_mid = $roomId;
+                }
+                 
+                 echo 'bat dau gui tin nhan';
+               if( $toClient )
+                    $this->sendMessage($roomId, $client, $toClient, $msg->message, $msg->timestamp);
                 
                 
-                $msg['timestamp'] = isset($msg['timestamp']) ? $msg['timestamp'] : time();
-                $this->logMessageReceived($client, $roomId, $msg['message'], $msg['timestamp']);
-                $this->sendMessage($client, $roomId, $msg['message'], $msg['timestamp']);
-                $this->sendUserStoppedTypingMessage($client, $roomId);
+                $this->saveMessageReceived( $roomId, $client->getMid(), $to_mid, $msg->message, $msg->timestamp );
                 break;
+                
             case self::ACTION_USER_STARTED_TYPING:
                 $this->sendUserStartedTypingMessage($client, $roomId);
                 break;
+                
             case self::ACTION_USER_STOPPED_TYPING:
                 $this->sendUserStoppedTypingMessage($client, $roomId);
                 break;
@@ -230,6 +245,7 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
      */
     protected function findClient(ConnectionInterface $conn)
     {
+        
         if (isset($this->clients[$conn->resourceId])) {
             return $this->clients[$conn->resourceId];
         }
@@ -237,6 +253,20 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         throw new ConnectedClientNotFoundException($conn->resourceId);
     }
     
+    protected function findClientByMid($roomId, $mid)
+    {
+        $clients = $this->findRoomClients( $roomId );
+        foreach( $clients as $client ){
+            if( $client->getMid() == $mid ){
+                return $client;
+                break;
+            }
+        }
+  
+        return false;
+    }
+    
+   
         /**
      * @param $action
      * @throws InvalidActionException
@@ -270,17 +300,7 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         return false;
     }
     
-    // return ConnectedClientInterface $client
-    protected function findClientInRoom( $roomId, $mid ){
-        $clients = $this->findRoomClients( $roomid );
-        foreach( $clients as $client ){
-            if( $clients->getMid() == $mid ){
-                return $client;
-                break;
-            }
-        }
-        return false;
-    }
+  
     
 
     /**
@@ -352,54 +372,104 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         return $roomId;
     }
     
-    
-
-    /**
-     * @param ConnectedClientInterface $client
-     * @param $roomId
-     * @param $message
-     * @param $timestamp
-     */
-    protected function sendMessage(ConnectedClientInterface $client, $roomId, $message, $timestamp)
+    protected function sendMessage($roomid, ConnectedClientInterface $from,ConnectedClientInterface $to, $message, $timestamp)
     {
+        echo 'Nhay vao gui message '. json_encode($to->asArray());
         $dataPacket = array(
-            'type'=>self::PACKET_TYPE_MESSAGE,
-            'roomid' => $roomId,
-            'from'=>$client->asArray(),
+            'type'=> self::PACKET_TYPE_MESSAGE,
+            'roomid' => $roomid,
+            'from'=> $from->getProfile(),
             'timestamp'=>$timestamp,
-            'message'=>$this->makeMessageReceivedMessage($client, $message, $timestamp),
+            'message'=> $message,
         );
+        $this->sendData($to, $dataPacket);
+    }
 
+
+    protected function sendUserMessageHistory($roomId, ConnectedClientInterface $client)
+    {
+        // is client 
+        if( $client->getisClients() ){
+            
+            
+            $arrUserOnline = array();
+            $clientsAreOnline = $this->findRoomClients($roomId);
+            unset($clientsAreOnline[$client->getResourceId()]);
+            if( count($clientsAreOnline) > 0 ){
+                foreach( $clientsAreOnline as $useronline ){
+                    array_push( $arrUserOnline, $useronline->getMid() );
+                }
+                
+                $strUserOnline = implode(',',$arrUserOnline);
+                echo 'User online'.json_encode($strUserOnline).PHP_EOL;
+                $topEnduserHistory = DB::select("SELECT from_mid, to_mid FROM messages 
+                WHERE from_mid IN ('{  $strUserOnline }') or to_mid IN ('{$strUserOnline}')");
+                
+                echo json_encode($topEnduserHistory); die();
+                
+                
+            }
+            
+            
+            
+           
+           
+               
+          
+                
+            $arrU = array();
+            foreach( $topEnduserHistory as $user){
+                $temp = array();
+                $temp['mid'] = $user->to_id;
+                $temp['displayName'] = $user->displayName;
+                $temp['pictureUrl'] = $user->pictureUrl;
+                $historyData = DB::table('messages')
+                    ->where('room_id',$room_id)
+                    ->where('from_mid',$client->getMid())
+                    ->where('to_mid',$user->to_mid)
+                    ->orderBy('created_at','DESC')
+                    ->take(20)
+                    ->toSql();
+                    //->get();
+                    
+                echo 'History'.json_encode($historyData);
+                
+                die();
+                $temp['history'] = $historyData;
+                array_push( $arrU, $temp );
+            }
+            
+            
+            
+            $dataPacket = array(
+                'type' => self::PACKET_TYPE_USER_CONNECTED,
+                'timestamp' => time(),
+                'clients'=> $arrU
+            );
+        
+            $this->sendData($client, $dataPacket);
+            // Alert all enduser clients has connected
+            $this->sendMessageSystemClientsConnected($roomId, $client);            
+
+        }
+        
+        
+    }
+    
+    protected function sendMessageSystemClientsConnected( $roomId,ConnectedClientInterface $client ){
+        $dataPacket = array(
+            'type' => self::PACKET_TYPE_USER_CONNECTED,
+            'timestamp' => time(),
+            'message_type'=> 'system_status',
+            'message' => $client->getName().' has connected! '
+        );
+        
         $clients = $this->findRoomClients($roomId);
         unset($clients[$client->getResourceId()]);
         $this->sendDataToClients($clients, $dataPacket);
     }
-
     
-
-   
-
-    protected function sendUserMessageHistory($roomId,ConnectedClientInterface $client)
-    {
-        $message = null;
-        
-        if( $checkMessage = $this->getMessageHistory($roomId,$client) ){
-            $message = $checkMessage;
-        }else{
-            $message = $this->makeUserWelcomeMessage($client, time());
-        }
-        
-       
-        $dataPacket = array(
-            'type' => self::PACKET_TYPE_USER_CONNECTED,
-            'timestamp' => time(),
-            'message'=> $message,
-        );
-
-        $this->sendData($client, $dataPacket);
-        
-    }
-
+  
      /**
      * @param ConnectedClientInterface $client
      * @param $roomId
@@ -484,16 +554,15 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     protected function sendUserStartedTypingMessage(ConnectedClientInterface $client, $roomId)
     {
         $dataPacket = array(
-            'type'=>self::PACKET_TYPE_USER_STARTED_TYPING,
-            'timestamp'=>time(),
+            'type' => self::PACKET_TYPE_USER_STARTED_TYPING,
             'roomid' => $roomId,
-            'data' => array(
-                'message'=> $client->getName().' is typing...',
-                'message_type' => 'system_status',
-                'profile' => $client->getProfile()
-            )
-            
+            'from' => $client->getMid(),
+            'message' => $client->getName().' is typing...',
+            'message_type' => 'system_status',
+            'timestamp'=>time()
         );
+        
+        
         
 
         $clients = $this->findRoomClients($roomId);
@@ -605,7 +674,7 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     protected function createClient(ConnectionInterface $conn, $name,$mid,$profile,$isClients )
     {
         
-        $client = new ConnectedClient;
+        $client = new ConnectedClient();
         $client->setResourceId($conn->resourceId);
         $client->setConnection($conn);
         $client->setName($name);
@@ -631,17 +700,17 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         return vsprintf('%s has left', array($client->getName()));
     }
 
-    protected function makeMessageReceivedMessage(ConnectedClientInterface $from, $message, $timestamp)
-    {
-        return $message;
-    }
 
-    protected function logMessageReceived(ConnectedClientInterface $from, $message, $timestamp)
+    protected function saveMessageReceived($room_id,$from_mid,$to_mid, $message, $timestamp)
     {
-        /** save messages to a database, etc... */
         $created = Message::create([
-            'room_id' => ''
+            'room_id' => $room_id,
+            'from_mid' => $from_mid,
+            'to_mid' => $to_mid,
+            'message' => $message,
+            'created_at' => $timestamp
         ]);
+        return $created;
     }
 
 }

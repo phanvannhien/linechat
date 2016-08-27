@@ -73,9 +73,12 @@
 			    
 			    <div class="message_template" style="display:none">
 			          <li class="message">
-			              <div class="avatar"></div>
+			              <div class="avatar">
+			                  <img src="">
+			              </div>
 			              <div class="text_wrapper">
 			                  <div class="text"></div>
+			                  <div class="timestamp"></div>
 			              </div>
 			          </li>
 			      </div>
@@ -87,9 +90,208 @@
 	<script type="text/javascript" src="{{ secure_asset('adcp/js/bootstrap.min.js') }}"></script>
 	<script type="text/javascript" src="{{ secure_asset('assets/plugins/jquery.scrollbar/jquery.scrollbar.min.js') }} "></script>
 	<script>
-      var profile = jQuery.parseJSON('{"displayName":"Tenposs1","mid":"u9c1af340d8af0d5aa7e63fffa2c2aa28","pictureUrl":"http:\/\/dl.profile.line-cdn.net\/0m01e82b837251d975a21b9588414fa3f563a9f19abd5a","statusMessage":"hi im strong"}');
+      var profile = jQuery.parseJSON('{"displayName":"Tenposs1","mid":"uaa357d613605ebf36f6366a7ce896180","pictureUrl":"http:\/\/dl.profile.line-cdn.net\/0m01e82b837251d975a21b9588414fa3f563a9f19abd5a","statusMessage":"hi im strong"}');
     </script>
-	<script type="text/javascript" src="{{ secure_asset('assets/js/back-chat.js') }}"></script>
+	
+<script type="text/javascript">
+
+var ws_host = 'tenposs-phanvannhien.c9users.io';
+var ws_port = '80';
+var ws_folder = '';
+var ws_path = '/websocket';
+var ws_url = 'wss://' + ws_host;
+if (ws_port != '80' && ws_port.length > 0) {
+    ws_url += ':' + ws_port;
+}
+ws_url += ws_folder + ws_path;
+
+var conn;
+var Message;
+
+
+function drawMessage(side, profile, message){
+	var $message;
+    var d = new Date();
+    $message = $($('.message_template').clone().html());
+    $message.addClass(side).find('.text').html(message);
+    $message.find('.avatar img').attr('src',profile.pictureUrl+'/small')
+    $message.find('.timestamp').text(d.getTime()/1000);
+    
+    console.log('Kiem tra ton tai');
+    if( checkExistBoxItems(profile) ){
+        renderChatLists(profile);
+        renderChatBox(profile);
+        
+         $('div#box-'+profile.mid+' ul.messages').append($message);
+    }else{
+         $('div#box-'+profile.mid+' ul.messages').append($message);
+    }
+    
+    setTimeout(function () {
+        return $message.addClass('appeared');
+    }, 0);
+    
+    return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
+  
+};
+
+
+
+// Send message text enduser typing   
+function sendMessage(target) {
+    // Draw message client
+    console.log(target);
+    var closest = $(target).closest('.panel');
+    var $messages, message;
+    if ($(target).val().trim() === '') {
+        return;
+    }
+    
+    $messages = $(closest).find('ul.messages');
+    
+
+    var d = new Date();
+    $message = $($('.message_template').clone().html());
+    $message.addClass('right').find('.text').html( $(target).val() );
+    $message.find('.avatar img').attr('src',profile.pictureUrl+'/small')
+    $message.find('.timestamp').text(d.getTime()/1000);
+    $messages.append($message);
+    setTimeout(function () {
+        return $message.addClass('appeared');
+    }, 0);
+    // Send message to server
+    var d = new Date();
+    var params = {
+        'message': $(target).val(),
+        'to': $(closest).attr('data-id'),
+        'action': 'message',
+        'timestamp': d.getTime()/1000
+    };
+    conn.send(JSON.stringify(params));
+    $(target).val('');
+    return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
+};
+
+// Connect to server 
+function connectToChat() {
+    conn = new WebSocket(ws_url);
+    conn.onopen = function() {
+    	var params = {
+            'action': 'connect',
+            'roomId': 'uaa357d613605ebf36f6366a7ce896180',
+            'from' : {
+              'user_type' : 'clients',
+              'profile' : profile
+            }
+        };
+        
+        console.log('Client request connect:');
+        console.log(params);
+        conn.send(JSON.stringify(params));
+    };
+
+    conn.onmessage = function(e) {
+        console.log('Get message from enduser:');
+        console.log(JSON.parse(e.data));
+        var data = JSON.parse(e.data);
+        
+        
+  
+        if (data.hasOwnProperty('type')) {
+           
+            if (data.type == 'list-users' && data.hasOwnProperty('clients')) {
+                displayListEndUsers(data.clients);
+            }
+            
+            else if (data.type == 'message' && data.hasOwnProperty('message')) {
+                drawMessage( 'left', data.from, data.message );
+            }
+            
+        }
+    };
+
+    conn.onerror = function(e) {
+        console.log(e);
+    };
+    
+    conn.onclose =function(e){
+        console.log('Connection closed');
+    };
+
+
+    return false;
+}
+
+
+function displayListEndUsers(endUsers){
+    $(endUsers).each(function(index,item){
+        if( item.mid !== item.roomid ){
+            if( checkExistBoxItems(item) )
+                renderChatLists(item);
+                renderChatBox(item);
+        }
+    });
+}
+
+function checkExistBoxItems(enduser){
+    if( $('#enduser-chat-list #'+enduser.mid).length > 0 ){
+        return false;
+    }else{
+        return true;
+    }
+
+    
+}
+
+
+function renderChatLists(enduser){
+    var $template;
+    $template = $($('#members-template').clone().html());
+    $template.attr('id',enduser.mid).addClass('rendered');
+    $template.find('.media-object').attr('src',enduser.pictureUrl+'/small');
+    $template.find('.media-heading').html(enduser.displayName);
+    $template.find('.media-body p').text(enduser.statusMessage);
+      
+    $('#enduser-chat-list').append($template);
+    return setTimeout(function () {
+        return $template.addClass('appeared');
+    }, 0);
+}
+
+
+function renderChatBox(enduser){
+    
+    var $template;
+    $template = $($('#room-template .rooms').clone().html());
+    $template.attr('id','box-'+enduser.mid).attr('data-id',enduser.mid)
+        .find('.panel-heading').html(enduser.displayName);
+    $('#message-wrapper').append($template);
+    return setTimeout(function () {
+        return $template.addClass('appeared');
+    }, 0);
+}
+
+
+$(document).ready(function(){
+    $('.scrollbar-macosx').scrollbar();
+    connectToChat();
+    
+    $('#message-wrapper').on('keyup','.message_input',function (e) {
+        if (e.which === 13) {
+            return sendMessage(this);
+        }
+    });
+    
+    $('#message-wrapper').on('click','.send_message',function(e){
+        
+    	var target = $(this).parent().next('input');
+    	$(target).trigger('keyup');
+    	
+    })
+});
+
+		
+	</script>
 </body>
 </html>
 
