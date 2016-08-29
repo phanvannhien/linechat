@@ -49,7 +49,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     const PACKET_TYPE_USER_LIST = 'list-users';
     
     
-    
     const PACKET_TYPE_USER_STARTED_TYPING = 'user-started-typing';
     const PACKET_TYPE_USER_STOPPED_TYPING = 'user-stopped-typing';
     
@@ -61,13 +60,13 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     protected $loginService; // LINE login service configuration
 
     ///@var arrays
-    protected $rooms;
+    public $rooms;
 
     //@var array|ConnectedClientInterface[]
-    protected $clients;
+    public $clients;
 
     //@var array
-    protected $validActions;
+    public $validActions;
 
     public function __construct()
     {
@@ -95,13 +94,52 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     }
     
     public function index(Request $request){
-        return 'This is BOT server handle';
-        Debugbar::info($request->input('result'));
-      
+        
+        $data = json_encode( $request->all() ) ;
+        $data = json_decode($data);
+        $data = $data->result[0];
+        Log::info(print_r($data, true));
+        Log::info(print_r($this->getRooms(), true));
+        Log::info(print_r($this->getClients(), true));
+        //“138311609000106303”	Received message (example: text, images)
+        //“138311609100106403”	Received operation (example: added as friend)
+        if ( $data->eventType == '138311609000106303' ){
+            if( $data->toChannel == $this->user->channelId  && $data->to[0] == $this->user->channelMid){
+                //1	Text message
+                //2	Image message
+                //3	Video message
+                //4	Audio message
+                //7	Location message
+                //8	Sticker message
+                //10	Contact message
+                $roomId = trim( $this->user->channelMid );
+                $from = $this->findClientByMid($roomId, $data->content->from);
+                
+                $to = $this->findClientByMid($roomId, $data->content->to[0]);
+                switch ($data->content->contentType) {
+                    
+                    case 1: // Text Message
+                    
+                        $this->sendMessage($roomId,$from,$to,$data->content->text,$data->content->createdTime);
+                        break;
+                    
+
+                    default:
+                        // code...
+                        break;
+                }
+                
+            }
+            
+            
+            
+        }
+        
+        
+        
     }
     
     
-
     // @return array
     public function getRooms()
     {
@@ -132,13 +170,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
 
     }
 
-    /**
-     * @param ConnectionInterface $conn
-     * @param string $msg
-     * @throws ConnectedClientNotFoundException
-     * @throws InvalidActionException
-     * @throws MissingActionException
-     */
     public function onMessage(ConnectionInterface $conn, $msg)
     {
         echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
@@ -152,19 +183,8 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         $this->checkActionExists($msg->action);
         
         if ( $msg->action != self::ACTION_USER_CONNECTED) {
-            
-            
-            
-            
-            
             $client = $this->findClient($conn);
             $roomId = $this->findClientRoom($client);
-            echo 'Client found:'.PHP_EOL;
-            echo json_encode($client ).PHP_EOL;
-            echo 'Room found:'.PHP_EOL;
-            echo json_encode($roomId).PHP_EOL;
-            echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
-                
         }
         
         
@@ -173,32 +193,18 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
                 
                 $fromClients = true;
                 $roomId = $this->makeRoom( $msg->roomId );
-
                 if( $msg->from->user_type == 'endusers' )
                     $fromClients = false;
-                
                 // Create new client    
                 $client = $this->createClient($conn, 
                     $msg->from->profile->displayName,
                     $msg->from->profile->mid,
                     $msg->from->profile,
                     $fromClients);
-                
-                
-                echo 'Created client'.json_encode($client);
+        
                 // Conntect client to room
                 $this->connectUserToRoom($client, $roomId);
-                
-                echo 'Client connected:'.PHP_EOL;
-                echo json_encode($client->asArray()).PHP_EOL;
-                echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
-                
-                echo 'All rooms:'.PHP_EOL;
-                echo json_encode($this->getRooms()).PHP_EOL;
-                echo '--------------------------------------------------------------------------------------------------------'.PHP_EOL;
                 //$this->sendUserMessageHistory($roomId,$client);
-                
-                
                 break;
             case self::ACTION_LIST_USERS :
                 //$this->sendListUsersMessage($client, $roomId);
@@ -211,17 +217,11 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
                     $toClient = $this->findClientByMid($roomId,$msg->to);
                     $to_mid = $msg->to;
                 }else{
-                    
                     $toClient = $this->findClientByMid($roomId,$roomId);
-                    echo 'Tim thang client: '. json_encode($toClient->asArray());
                     $to_mid = $roomId;
                 }
-                 
-                 echo 'bat dau gui tin nhan';
-               if( $toClient )
+                if( $toClient )
                     $this->sendMessage($roomId, $client, $toClient, $msg->message, $msg->timestamp);
-                
-                
                 $this->saveMessageReceived( $roomId, $client->getMid(), $to_mid, $msg->message, $msg->timestamp );
                 break;
                 
@@ -236,20 +236,21 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         }
     }
 
-    
+    public function onClose(ConnectionInterface $conn)
+    {
+        $this->closeClientConnection($conn);
+    }
+    public function onError(ConnectionInterface $conn, \Exception $e)
+    {
+        $this->closeClientConnection($conn);
+        $conn->close();
+    }
 
-    /**
-     * @param ConnectionInterface $conn
-     * @return ConnectedClientInterface
-     * @throws ConnectedClientNotFoundException
-     */
     protected function findClient(ConnectionInterface $conn)
     {
-        
         if (isset($this->clients[$conn->resourceId])) {
             return $this->clients[$conn->resourceId];
         }
-
         throw new ConnectedClientNotFoundException($conn->resourceId);
     }
     
@@ -262,15 +263,9 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
                 break;
             }
         }
-  
         return false;
     }
     
-   
-        /**
-     * @param $action
-     * @throws InvalidActionException
-     */
     protected function checkActionExists($action)
     {
         if (!in_array($action, $this->validActions)) {
@@ -278,10 +273,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         }
     }
 
-    /**
-     * @param ConnectedClientInterface $client
-     * @param $roomId
-     */
     protected function connectUserToRoom(ConnectedClientInterface $client, $roomId)
     {
         $this->rooms[$roomId][$client->getResourceId()] = $client;
@@ -300,22 +291,13 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         return false;
     }
     
-  
-    
-
-    /**
-     * @param $roomId
-     * @return array|ConnectedClientInterface[]
-     */
     protected function findRoomClients($roomId)
     {
         return $this->rooms[$roomId];
     }
 
     /**
-     * @param ConnectedClientInterface $client
      * @return int|string
-     * @throws ConnectedClientNotFoundException
      */
     protected function findClientRoom(ConnectedClientInterface $client)
     {
@@ -328,16 +310,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         throw new ConnectedClientNotFoundException($client->getResourceId());
     }
 
-   
-    protected function getMessageHistory($room_id, $from){
-        $messages = Message::where('room_id',$room_id)
-            ->where('from_mid',$from->getMid())
-            ->orderBy('created_at','DESC')
-            ->paginate(10);
-        if( $messages->count() > 0 )
-            return $messages;    
-        return false;
-    }
    
     /**
      * @param array|ConnectedClientInterface[] $clients
@@ -368,13 +340,11 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         if (!isset($this->rooms[$roomId])) {
             $this->rooms[$roomId] = array();
         }
-
         return $roomId;
     }
     
     protected function sendMessage($roomid, ConnectedClientInterface $from,ConnectedClientInterface $to, $message, $timestamp)
     {
-        echo 'Nhay vao gui message '. json_encode($to->asArray());
         $dataPacket = array(
             'type'=> self::PACKET_TYPE_MESSAGE,
             'roomid' => $roomid,
@@ -410,13 +380,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
                 
             }
             
-            
-            
-           
-           
-               
-          
-                
             $arrU = array();
             foreach( $topEnduserHistory as $user){
                 $temp = array();
@@ -470,23 +433,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     }
     
   
-     /**
-     * @param ConnectedClientInterface $client
-     * @param $roomId
-     */
-    protected function sendUserWelcomeMessage(ConnectedClientInterface $client, $roomId)
-    {
-        $dataPacket = array(
-            'type'=>self::PACKET_TYPE_USER_CONNECTED,
-            'timestamp'=>time(),
-            'data' => array(
-                'message' => $this->makeUserWelcomeMessage($client, time()),
-            ) 
-            
-        );
-        $this->sendData($client, $dataPacket);
-    }
-
     /**
      * @param ConnectedClientInterface $client
      * @param $roomId
@@ -524,13 +470,9 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         $dataPacket = array(
             'type'=>self::PACKET_TYPE_USER_DISCONNECTED,
             'timestamp'=>time(),
-            'roomid' => $roomId,
-            'data' => array(
-                'message'=> $this->makeUserDisconnectedMessage($client, time()),
-                'message_type' => 'system_status',
-                'client' => $client->getProfile() // client disconnected
-            ),
-            
+            'mid' => $client->getMid(),
+            'message_type' => 'system_status',
+            'message' => $this->makeUserDisconnectedMessage($client, time())
         );
         
         // if is clients manager
@@ -561,10 +503,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
             'message_type' => 'system_status',
             'timestamp'=>time()
         );
-        
-        
-        
-
         $clients = $this->findRoomClients($roomId);
         unset($clients[$client->getResourceId()]);
         $this->sendDataToClients($clients, $dataPacket);
@@ -587,64 +525,7 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         $this->sendDataToClients($clients, $dataPacket);
     }
 
-    /**
-     * @param ConnectedClientInterface $client
-     * @param $roomId
-     */
-    protected function sendListUsersMessage(ConnectedClientInterface $client, $roomId)
-    {
-        $clients = array();
-        $cliensInRooms = $this->findRoomClients($roomId);
-        foreach ($cliensInRooms AS $roomClient) {
-    
-                $clients[] = array(
-                    'roomid' => $roomId,
-                    'name'=> $roomClient->getName(),
-                    'mid' => $roomClient->getMid(),
-                    'profile' => $roomClient->getProfile(),
-                    'isClients' => $roomClient->getisClients()
-                );
-        }
 
-        $dataPacket = array(
-            'type'=>self::PACKET_TYPE_USER_LIST,
-            'timestamp'=>time(),
-            'clients'=>$clients,
-            
-        );
-        
-        if( $client->getisClients() ){
-            $this->sendData($client, $dataPacket);
-        }else{
-            foreach ($cliensInRooms as $client){
-                if( $client->getisClients() ){
-                    $this->sendData($client, $dataPacket);
-                    break;
-                }
-            }
-        }
-        
-        
-    }
-
-
-    /**
-     * @param ConnectionInterface $conn
-     */
-    public function onClose(ConnectionInterface $conn)
-    {
-        $this->closeClientConnection($conn);
-    }
-
-    /**
-     * @param ConnectionInterface $conn
-     * @param \Exception $e
-     */
-    public function onError(ConnectionInterface $conn, \Exception $e)
-    {
-        $this->closeClientConnection($conn);
-        $conn->close();
-    }
 
     /**
      * @param ConnectionInterface $conn
@@ -653,9 +534,8 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     protected function closeClientConnection(ConnectionInterface $conn)
     {
         $client = $this->findClient($conn);
-
         unset($this->clients[$client->getResourceId()]);
-        foreach ($this->rooms AS $roomId=>$connectedClients) {
+        foreach ($this->rooms AS $roomId => $connectedClients) {
             if (isset($connectedClients[$client->getResourceId()])) {
                 $clientRoomId = $roomId;
                 unset($this->rooms[$roomId][$client->getResourceId()]);
@@ -667,10 +547,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         }
     }
 
-
-
-   
-
     protected function createClient(ConnectionInterface $conn, $name,$mid,$profile,$isClients )
     {
         
@@ -681,10 +557,19 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
         $client->setMid($mid);
         $client->setProfile($profile);
         $client->setisClients($isClients);
-  
         return $client;
     }
-    
+    protected function saveMessageReceived($room_id,$from_mid,$to_mid, $message, $timestamp)
+    {
+        $created = Message::create([
+            'room_id' => $room_id,
+            'from_mid' => $from_mid,
+            'to_mid' => $to_mid,
+            'message' => $message,
+            'created_at' => $timestamp
+        ]);
+        return $created;
+    }
     protected function makeUserWelcomeMessage(ConnectedClientInterface $client, $timestamp)
     {
         return vsprintf('Welcome %s!', array($client->getName()));
@@ -698,19 +583,6 @@ class MultiRoomServer extends Controller implements MessageComponentInterface
     protected function makeUserDisconnectedMessage(ConnectedClientInterface $client, $timestamp)
     {
         return vsprintf('%s has left', array($client->getName()));
-    }
-
-
-    protected function saveMessageReceived($room_id,$from_mid,$to_mid, $message, $timestamp)
-    {
-        $created = Message::create([
-            'room_id' => $room_id,
-            'from_mid' => $from_mid,
-            'to_mid' => $to_mid,
-            'message' => $message,
-            'created_at' => $timestamp
-        ]);
-        return $created;
     }
 
 }

@@ -112,6 +112,9 @@ var Message;
 function drawMessage(side, profile, message){
 	var $message;
     var d = new Date();
+    
+    $messages = $('div#box-'+profile.mid+' ul.messages');
+    
     $message = $($('.message_template').clone().html());
     $message.addClass(side).find('.text').html(message);
     $message.find('.avatar img').attr('src',profile.pictureUrl+'/small')
@@ -121,10 +124,9 @@ function drawMessage(side, profile, message){
     if( checkExistBoxItems(profile) ){
         renderChatLists(profile);
         renderChatBox(profile);
-        
-         $('div#box-'+profile.mid+' ul.messages').append($message);
+        $messages.append($message);
     }else{
-         $('div#box-'+profile.mid+' ul.messages').append($message);
+        $messages.append($message);
     }
     
     setTimeout(function () {

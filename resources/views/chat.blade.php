@@ -69,16 +69,17 @@ var room_id = '{{ $room_id }}';
 function drawMessage(side, profile, message){
      
     var $message;
+    var $messages = $('ul.messages');
     var d = new Date();
     $message = $($('.message_template').clone().html());
     $message.addClass(side).find('.text').html(message);
     $message.find('.avatar img').attr('src',profile.pictureUrl+'/small')
     $message.find('.timestamp').text(d.getTime()/1000);
-    $('.messages').append($message);
-    return setTimeout(function () {
+    $messages.append($message);
+    setTimeout(function () {
         return $message.addClass('appeared');
     }, 0);
-
+    return $messages.animate({ scrollTop: $messages.prop('scrollHeight') }, 300);
 }
 
 function drawSystemMessage(text){
@@ -144,7 +145,7 @@ function connectToChat() {
         var data = JSON.parse(e.data);
         
         if (data.hasOwnProperty('type')) {
-          if( data.type == 'user-connected' && data.hasOwnProperty('message_type') ){
+          if( data.type == 'user-connected' && data.hasOwnProperty('message_type') && data.hasOwnProperty('message')){
             if( data.message_type == 'system_status' ){
               drawSystemMessage(data.message);
             }
@@ -154,6 +155,11 @@ function connectToChat() {
             drawMessage('left',data.from, data.message);
           }
           
+          if (data.type = 'user-disconnected' && data.hasOwnProperty('message_type') && data.hasOwnProperty('message')) {
+            if( data.message_type == 'system_status' ){
+              drawSystemMessage(data.message);
+            }
+          }
         }
         
       
