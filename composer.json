@@ -9,9 +9,7 @@
         "laravel/framework": "5.2.*",
         "linecorp/line-bot-sdk": "^0.1.0",
         "anlutro/curl": "^1.4",
-        "hoa/websocket": "~2.0",
-        "cboden/ratchet": "^0.3.5",
-        "barryvdh/laravel-debugbar": "^2.2"
+        "predis/predis": "^1.1"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",

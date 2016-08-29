@@ -17,6 +17,8 @@ use App\Message;
 use App\LineAccount;
 use App\User;
 
+use L5Redis;
+
 class LineChatController extends Controller
 {
     //
@@ -45,10 +47,45 @@ class LineChatController extends Controller
     * Handle BOT Server callback
     */
     public function index(Request $request){
-        return 'This is the BOT Server handle';
-        $from = json_decode(json_encode($request->all()));
-        $from = $from[0]->content['from'];
-
+       
+        $data = json_encode( $request->all() ) ;
+        $data = json_decode($data);
+        if( !$data ){
+            return view('welcome');
+        }
+       
+        $data = $data->result[0];
+        Log::info(print_r($data, true));
+        //“138311609000106303”	Received message (example: text, images)
+        //“138311609100106403”	Received operation (example: added as friend)
+        if ( $data->eventType == '138311609000106303' ){
+            if( $data->toChannel == $this->user->channelId  && $data->to[0] == $this->user->channelMid){
+                //1	Text message
+                //2	Image message
+                //3	Video message
+                //4	Audio message
+                //7	Location message
+                //8	Sticker message
+                //10	Contact message
+                
+                switch ($data->content->contentType) {
+                    
+                    case 1: // Text Message
+                        $redis = L5Redis::connection();
+                        $redis->publish('line.message', json_encode($data->content));
+                        break;
+                    
+                    default:
+                        // code...
+                        break;
+                }
+                
+            }
+            
+            
+            
+        }
+  
     }
     
     public function chatScreen($user_id){
