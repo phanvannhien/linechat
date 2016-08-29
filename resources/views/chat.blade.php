@@ -49,22 +49,16 @@
       
     </div><!--end container -->
     
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>    
 <script type="text/javascript">
 
-var ws_host = 'tenposs-phanvannhien.c9users.io';
-var ws_port = '80';
-var ws_folder = '';
-var ws_path = '/websocket';
-var ws_url = 'wss://' + ws_host;
-if (ws_port != '80' && ws_port.length > 0) {
-    ws_url += ':' + ws_port;
-}
-ws_url += ws_folder + ws_path;
 
-var conn;
+var socket;
+
+
 var profile = $.parseJSON('<?php echo ($profile) ?>');
 var room_id = '{{ $room_id }}';
-
 
 function drawMessage(side, profile, message){
      
@@ -120,8 +114,20 @@ function sendMessage(text) {
 
 // Connect to server 
 function connectToChat() {
-    conn = new WebSocket(ws_url);
-    // client connected
+    socket = new io.connect('https://tenposs-phanvannhien.c9users.io:8989', {
+        'reconnection': true,
+        'reconnectionDelay': 1000,
+        'reconnectionDelayMax' : 5000,
+        'reconnectionAttempts': 5
+    });
+    // when user connect, store the user id and name
+    socket.on('connect', function (user) {
+      console.log('request connect');
+        socket.emit('join', {id: "123", name: "Nhienphan"});
+    });
+        
+            
+    /*
     conn.onopen = function() {
         var params = {
             'action': 'connect',
@@ -171,6 +177,7 @@ function connectToChat() {
     conn.onclose =function(e){
         console.log('Connection closed');
     };
+    */
     return false;
 }
 

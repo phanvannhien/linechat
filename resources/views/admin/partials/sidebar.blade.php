@@ -1,3 +1,3 @@
 <ul class="main-navigation">
-	<li><a href="{{ route('admin.clients') }}">Clients</a></li>
+	<li><a href="#">Clients</a></li>
 </ul>
